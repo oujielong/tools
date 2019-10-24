@@ -96,11 +96,11 @@ class Tool {
   /**
    * @description 根据筛选条件获取, 关键字，树，属性
    *
-   * @param {*} key  需要搜索的值
-   * @param {*} tree 树结构，下层用children表示，isLeaf 表示是否是最总叶子节点
-   * @param {*} prop 通过哪个属性和 key 对应
+   * @param {*} key  需要搜索的值 : string
+   * @param {*} tree 树结构，下层用children表示，isLeaf 表示是否是最总叶子节点 ：obj {children[{}]}
+   * @param {*} prop 通过哪个属性和 key 对应 :  obj {key:""}
    *
-   * @returns 返回当前key 的所有子节点： list
+   * @returns 返回当前key 的所有子节点： arr
    */
 
   nodeSelectionItems(key, tree, prop = { key: "key" }) {
@@ -119,10 +119,10 @@ class Tool {
   /**
    * @description 获取当前树的所有子节点
    *
-   * @param {*} tree 树结构，下层用children表示，isLeaf 表示是否是最总叶子节点
-   * @param {*} collectList 存储所有的叶子节点的数据
+   * @param {*} tree 树结构，下层用children表示，isLeaf 表示是否是最总叶子节点 : obj
+   * @param {*} collectList 存储所有的叶子节点的数据 arr
    *
-   * @returns 最后的叶子节点的集合: list
+   * @returns 最后的叶子节点的集合: arr
    */
 
   recursionGetItem(tree) {
@@ -136,5 +136,22 @@ class Tool {
       }
       return collectList;
     }
+  }
+
+  /**
+   * @description 根据分页参数从 数组中获取相应位置的数据
+   *
+   * @param {*} currentPage  当前页 : num
+   * @param {*} pageSize  当前页大小: num
+   * @param {*} array 列表的所有数据 :arr
+   *
+   * @returns 返回特定位置的数据 ：arr
+   */
+
+  arrayPagination(currentPage = 1, pageSize, array) {
+    var offset = (currentPage - 1) * pageSize;
+    return offset + pageSize >= array.length
+      ? array.slice(offset, array.length)
+      : array.slice(offset, offset + pageSize);
   }
 }
