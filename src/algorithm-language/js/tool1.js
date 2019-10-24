@@ -92,4 +92,49 @@ class Tool {
     });
     return targetObj;
   }
+
+  /**
+   * @description 根据筛选条件获取, 关键字，树，属性
+   *
+   * @param {*} key  需要搜索的值
+   * @param {*} tree 树结构，下层用children表示，isLeaf 表示是否是最总叶子节点
+   * @param {*} prop 通过哪个属性和 key 对应
+   *
+   * @returns 返回当前key 的所有子节点： list
+   */
+
+  nodeSelectionItems(key, tree, prop = { key: "key" }) {
+    if (tree[prop.key] == key) {
+      return this.recursionGetItem(tree);
+    } else if (tree.children && tree.children.length > 0) {
+      for (let i = 0; i < tree.children.length; i++) {
+        let res = this.nodeSelectionItems(key, tree.children[i], prop);
+        if (res && res.length > 0) {
+          return res;
+          break;
+        }
+      }
+    }
+  }
+  /**
+   * @description 获取当前树的所有子节点
+   *
+   * @param {*} tree 树结构，下层用children表示，isLeaf 表示是否是最总叶子节点
+   * @param {*} collectList 存储所有的叶子节点的数据
+   *
+   * @returns 最后的叶子节点的集合: list
+   */
+
+  recursionGetItem(tree) {
+    let collectList = [];
+    if (tree.isLeaf) {
+      return collectList.push(tree);
+    } else if (tree.children && tree.children.length > 0) {
+      for (let i = 0; i < tree.children.length; i++) {
+        let items = this.recursionGetItem(tree.children[i]);
+        collectList.push(...items);
+      }
+      return collectList;
+    }
+  }
 }
