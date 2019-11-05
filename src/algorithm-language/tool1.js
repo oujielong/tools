@@ -155,6 +155,7 @@ class Tool {
       : array.slice(offset, offset + pageSize);
   }
 
+  
   /**
    * @description 数组对象查找方法， 限制， 模糊搜索和精确搜索的关键字不能重复
    *
@@ -165,6 +166,7 @@ class Tool {
    * @returns 返回搜索完的数据 ：arr
    */
   arraySearchByKeys(array, keys = { key1: 1, key2: 2 }, accurate = {}) {
+    
     let searchArrObj = Object.entries(keys);
     let accurateSearchArrObj = Object.entries(accurate);
 
@@ -196,7 +198,6 @@ class Tool {
         return filterFlage;
       });
     }
-
     return searchRestTem;
   }
 }

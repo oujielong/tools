@@ -2,9 +2,12 @@
   "name": "tools",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "private": true,
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "webpack --config webpack.config.js",
+    "startServer": "webpack-dev-server --open --config webpack.config.js",
+    "splitstart": "webpack-dev-server --open --config webpack.dev.js",
+    "splitbuild": "webpack --config webpack.prod.js"
   },
   "repository": {
     "type": "git",
@@ -15,5 +18,26 @@
   "bugs": {
     "url": "https://github.com/oujielong/tools/issues"
   },
-  "homepage": "https://github.com/oujielong/tools#readme"
+  "homepage": "https://github.com/oujielong/tools#readme",
+  "devDependencies": {
+    "clean-webpack-plugin": "^3.0.0",
+    "css-loader": "^3.2.0",
+    "csv-loader": "^3.0.2",
+    "express": "^4.17.1",
+    "file-loader": "^4.2.0",
+    "html-webpack-plugin": "^3.2.0",
+    "mini-css-extract-plugin": "^0.8.0",
+    "optimize-css-assets-webpack-plugin": "^5.0.3",
+    "style-loader": "^1.0.0",
+    "uglifyjs-webpack-plugin": "^2.2.0",
+    "webpack": "^4.41.2",
+    "webpack-cli": "^3.3.10",
+    "webpack-dev-middleware": "^3.7.2",
+    "webpack-dev-server": "^3.9.0",
+    "webpack-merge": "^4.2.2",
+    "xml-loader": "^1.2.1"
+  },
+  "dependencies": {
+    "lodash": "^4.17.15"
+  }
 }
