@@ -44,7 +44,7 @@ module.exports = {
   },
   output: {
     path: path.resolve(__dirname, "dist"),
-    chunkFilename: "123[name].bundle.js",
-    filename: "[name].bundle.js"
+    chunkFilename: "[name].chunk.js",
+    filename: "[name].[chunkhash].js"
   }
 };
