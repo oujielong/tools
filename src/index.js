@@ -1,6 +1,7 @@
 import _ from "lodash";
 import Print from "./print";
 import "./styles.css";
+
 function component() {
   var element = document.createElement("div");
   var button = document.createElement("button");
@@ -11,8 +12,6 @@ function component() {
   element.appendChild(br);
   element.appendChild(button);
 
-  // Note that because a network request is involved, some indication
-  // of loading would need to be shown in a production-level site/app.
   element.onclick = Print.bind(null, "Hello webpack!");
 
   return element;

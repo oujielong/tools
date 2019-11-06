@@ -8,7 +8,7 @@ module.exports = {
   entry: {
     app: "./src/index.js",
     another: "./src/another-module.js",
-    vendor: ["lodash"], //单独将某写第三方插件打包
+    vendor: ["lodash"] //单独将某写第三方插件打包
   },
   mode: "development",
   // 源代码映射
@@ -37,11 +37,10 @@ module.exports = {
     }),
     new HtmlWebpackPlugin({ title: "Output Management" }),
     new MiniCssExtractPlugin({
-      // Options similar to the same options in webpackOptions.output
-      // both options are optional
       filename: "[name].[hash].css",
       chunkFilename: "[id].[hash].css"
-    })
+    }),
+    new webpack.HashedModuleIdsPlugin()
   ],
   optimization: {
     splitChunks: {
