@@ -64,7 +64,7 @@
 /******/
 /******/ 	// script path function
 /******/ 	function jsonpScriptSrc(chunkId) {
-/******/ 		return __webpack_require__.p + "" + ({"print":"print"}[chunkId]||chunkId) + ".chunk.js"
+/******/ 		return __webpack_require__.p + "" + ({"print":"print"}[chunkId]||chunkId) + "." + {"print":"410a49dabfbb6f61c1f3"}[chunkId] + ".js"
 /******/ 	}
 /******/
 /******/ 	// The require function
@@ -222,45 +222,4 @@
 /******/ 	return checkDeferredModules();
 /******/ })
 /************************************************************************/
-/******/ ({
-
-/***/ "./src/index.js":
-/*!**********************!*\
-  !*** ./src/index.js ***!
-  \**********************/
-/*! no exports provided */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony import */ var lodash__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! lodash */ "./node_modules/lodash/lodash.js");
-/* harmony import */ var lodash__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(lodash__WEBPACK_IMPORTED_MODULE_0__);
-
-
-function component() {
-  var element = document.createElement("div");
-  var button = document.createElement("button");
-  var br = document.createElement("br");
-
-  button.innerHTML = "Click me and look at the console!";
-  element.innerHTML = lodash__WEBPACK_IMPORTED_MODULE_0___default.a.join(["Hello", "webpack"], " ");
-  element.appendChild(br);
-  element.appendChild(button);
-
-  // Note that because a network request is involved, some indication
-  // of loading would need to be shown in a production-level site/app.
-  button.onclick = e =>
-    __webpack_require__.e(/*! import() | print */ "print").then(__webpack_require__.bind(null, /*! ./print */ "./src/print.js")).then(module => {
-      var print = module.default;
-      print();
-    });
-
-  return element;
-}
-
-document.body.appendChild(component());
-
-
-/***/ })
-
-/******/ });
+/******/ ([]);
