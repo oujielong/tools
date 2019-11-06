@@ -7,7 +7,8 @@ const webpack = require("webpack");
 module.exports = {
   entry: {
     app: "./src/index.js",
-    another: "./src/another-module.js"
+    another: "./src/another-module.js",
+    vendor: ["lodash"], //单独将某写第三方插件打包
   },
   mode: "development",
   // 源代码映射
@@ -36,6 +37,8 @@ module.exports = {
     }),
     new HtmlWebpackPlugin({ title: "Output Management" }),
     new MiniCssExtractPlugin({
+      // Options similar to the same options in webpackOptions.output
+      // both options are optional
       filename: "[name].[hash].css",
       chunkFilename: "[id].[hash].css"
     })
@@ -44,9 +47,9 @@ module.exports = {
     splitChunks: {
       cacheGroups: {
         commons: {
-          name: "commons",
-          chunks: "initial",
-          minChunks: 1
+          name: "vendor",
+          chunks: "initial", //all 会将所有第三方包打包成一个 initial
+          minChunks: 2
         }
       }
     }
