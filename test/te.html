@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <title>过渡</title>
+        <style></style>
+    </head>
+
+    <body>
+        <div style="display: flex;">
+            <!-- <p>富文本编辑器</p> -->
+            <div>
+                <img
+                    id="img"
+                    src="http://res.ajiao.com/uploadfiles/Book/251/101_838x979.jpg"
+                />
+            </div>
+            <div>
+                <a id="pre" onclick="pre()">上一页</a>
+                <a id="next" onclick="next()">下一页</a>
+            </div>
+        </div>
+    </body>
+</html>
+<script>
+    var currentPage = 102
+    function pre(e) {
+        currentPage--
+        debugger
+        document
+            .getElementById('img')
+            .setAttribute(
+                'src',
+                `http://res.ajiao.com/uploadfiles/Book/251/${currentPage}_838x979.jpg`
+            )
+    }
+    function next(e) {
+        currentPage++
+        document
+            .getElementById('img')
+            .setAttribute(
+                'src',
+                `http://res.ajiao.com/uploadfiles/Book/251/${currentPage}_838x979.jpg`
+            )
+    }
+</script>

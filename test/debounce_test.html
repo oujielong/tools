@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<script src="debounce.js"></script>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <title>抖动函数</title>
+        <style></style>
+    </head>
+
+    <body>
+        <div style="display: flex;">
+            <div>
+                <a id="pre">上一页</a>
+            </div>
+        </div>
+    </body>
+</html>
+<script>
+    var x = 12313
+    document.getElementById('pre').addEventListener(
+        'click',
+        debounce(function(event, x) {
+            console.log('事件：' + event)
+            console.log('额外参数' + x)
+        }, 500)
+    )
+</script>

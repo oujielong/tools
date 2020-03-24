@@ -9,7 +9,7 @@ module.exports = merge(common, {
     contentBase: path.join(__dirname, "dist"),
     compress: false,
     port: 9000,
-    clientLogLevel: "error"
+    clientLogLevel: "error",
   },
   plugins: []
 });
