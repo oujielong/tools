@@ -1,0 +1,291 @@
+import axios from 'axios';
+import fs from "node:fs";
+import path from "node:path";
+import { configs } from "./config.js";
+import moment from 'moment';
+import { progressArgs, writeData, businessSplcePath, sortRowData, BRE_filetoArray, contentFragmen_fileToArray, golbalViewsaveToJson } from "./util.js";
+import { changeFormJson } from "../util/common.js";
+
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+const MAX_RETRY_COUNT = 3;//下载重启次数
+const compareEnv = progressArgs();
+async function downFiles(downFileURls, env, instance) {
+    let notDownUrl = [];
+
+    const downloadFile = async (url, dest) => {
+        const response = await instance.get(url, {
+            responseType: 'stream'
+        });
+        // 需要无法单独调试转换成数组的问题
+        // let Tempdata = '';  
+        // response.data.on('data', (chunk) => {
+        //     Tempdata += chunk;
+        // });
+        // return new Promise((resolve, reject) => {
+        //     response.data.on('end', () => {
+        //         console.log("download file successfully", url);
+        //         BRE_dataBasetoArray(JSON.parse(Tempdata), dest);
+        //         resolve();
+        //     });
+        //     response.data.on("error", () => {
+        //         console.log("download file error", err);
+        //         reject();
+        //     });
+        // });
+        // --------------------------------------
+        const writer = fs.createWriteStream(dest);
+        response.data.pipe(writer);
+        return new Promise((resolve, reject) => {
+            writer.on('finish', (content) => {
+                console.log("download file successfully", url);
+                resolve();
+            });
+            writer.on('error', (err) => {
+                console.log("download file error", err);
+                reject();
+            });
+        });
+    };
+    const downloadAllFiles = async () => {
+        for (let i = 0; i < downFileURls.length; i += 2) {
+            const urls = downFileURls.slice(i, i + 2);
+            const downloads = urls.map(async (url) => {
+                let nowForamt = moment().format(configs.fileDataFormat);
+                let filename = "";
+                switch (true) {
+                    case url.includes("mpv-mws") || url.includes("vpf-mws") || url.includes("ve-mws"):
+                        filename = businessSplcePath(url).join("#") + "#" + nowForamt + ".json";
+                        break;
+                    case url.includes("id-vitality"):
+                        filename = `ID_${ url.match(/((?<=\/)en(?=\/))|((?<=\/)id(?=\/))/ig)[ 0 ] }#${ path.basename(url).replace(path.extname(url), "").replace(".model.tidy", "") }#` + nowForamt + ".json";
+                        break;
+                    case url.includes("ph-vitality"):
+                        filename = `PH_${ url.match(/((?<=\/)en(?=\/))|((?<=\/)ph(?=\/))/ig)[ 0 ] }#${ path.basename(url).replace(path.extname(url), "").replace(".model.tidy", "") }#` + nowForamt + ".json";
+                        break;
+                    case url.includes("th-vitality"):
+                        filename = `TH_${ url.match(/((?<=\/)en(?=\/))|((?<=\/)th(?=\/))/ig)[ 0 ] }#${ path.basename(url).replace(path.extname(url), "").replace(".model.tidy", "") }#` + nowForamt + ".json";
+                        break;
+                    default:
+                        console.log("没有匹配");
+                        break;
+                }
+                if (!fs.existsSync(path.join("./", `${ configs.collectionDataStore }originSource`, env))) {
+                    fs.mkdirSync(path.join("./", `${ configs.collectionDataStore }originSource`, env), { recursive: true });
+                }
+                const dest = path.join("./", `${ configs.collectionDataStore }originSource`, env, filename);
+                if (fs.existsSync(dest)) {
+                    console.log("skip exist");
+                    return Promise.resolve();
+                } else {
+                    let retryCount = 0;
+                    let recordFLag = true;
+                    while (retryCount < MAX_RETRY_COUNT) {
+                        try {
+                            await downloadFile(url, dest);
+                            return Promise.resolve();
+                        } catch (err) {
+                            if (err.response.status == 404) {
+                                recordFLag = false;
+                                retryCount = MAX_RETRY_COUNT;
+                            }
+                            console.log(`Failed to download ${ url }, retrying...`);
+                            retryCount++;
+                        }
+                    }
+                    // 直接标记无法下载
+                    if (recordFLag) {
+                        notDownUrl.push(url);
+                    }
+                }
+            });
+            await Promise.all(downloads);
+            if (i + 2 < downFileURls.length) {
+                await new Promise(resolve => setTimeout(resolve, 800));
+            }
+        }
+    };
+    await downloadAllFiles().catch(console.error);
+    return notDownUrl;
+}
+function getDataFromAxiosResponse(responseData, type) {
+    let existError = false;
+    let resultData = responseData.map(item => {
+        if (item?.value?.status == 200 && item?.value?.data) {
+            let data = [];
+            switch (type) {
+                case "getDecisions":
+                    data = [ ...item?.value?.data.decisionTableNames ];
+                    break;
+                case "getRules":
+                    data = item?.value?.data.data;
+                    break;
+                default:
+                    data = item?.value?.data.data;
+                    break;
+            }
+            return {
+                project: item.value.config.url,
+                data
+            };
+        } else {
+            console.log("返回失败", item?.reason?.config?.url);
+            existError = true;
+            return '';
+        }
+    }).filter(item => item != "");
+    if (existError) {
+        return false;
+    } else {
+        return resultData;
+    }
+}
+
+
+//  下载哪些环境的
+async function downLoadFromDataBase(envs = [ "PROD", "SIT", "UAT" ]) {
+    // 下载两个环境比较
+    for (let env of envs) {
+        let envConfig = configs.SourceHostConfig.ProjectBaseHosts.filter(item => item.env == env)[ 0 ];
+        if (String(envConfig) == "undefined") {
+            console.log("环境尚未定义,跳过", "BRE", env);
+            continue;
+        }
+        let ProjectBaseHost = envConfig.url;
+        let instance = axios.create({
+            baseURL: ProjectBaseHost,
+            timeout: 15000,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Basic dHNzX3VzZXI6dHNzX3VzZXI='
+            }
+        });
+        let projectBasePathList = configs.SourceHostConfig.projects;
+        let ProjectRules = await downLoadAlltheTime_structure(projectBasePathList, instance, "getRules");
+
+        let DB_list = await downLoadAlltheTime_structure(ProjectRules, instance, "getDecisions");
+
+
+        let db_details_fileurls = DB_list.map((db) => {
+            let oneDbDetail = db.data.map(item => {
+                let tagetUrl = db.project + "/decisiontable/" + item;
+                return tagetUrl;
+            });
+            return oneDbDetail;
+        });
+        // 方便调试而已
+        let filterCount = {
+            "mpv-mws": 0,
+            "vpf-mws": 0,
+            "ve-mws": 0
+        };
+        // 加参数过滤
+        db_details_fileurls = db_details_fileurls.flat().filter(item => {
+            // let targ = item.match(/(mpv-mws|ve-mws|vpf-mws)/ig);
+            // if (targ.length) {
+            //     filterCount[ targ[ 0 ] ] += 1;
+            //     if (filterCount[ targ[ 0 ] ] > 8) {
+            //         return false;
+            //     } else {
+            //         return true;
+            //     }
+            // } else {
+            //     return false;
+            // }
+            return item.includes("ve-mws") &&
+                (item.includes("AIATHVitalityEngageRules"))// &&
+                // (item.includes("assessmentDerivedAttributesMWB_DT"));
+            return true;
+        });
+
+        // 保存表记结构
+        DB_list.reduce((preMap, cur) => {
+            let platformName = cur.project.split("/")[ 1 ];
+            let mapvalue = [ cur ];
+            if (preMap.has(platformName)) {
+                mapvalue = preMap.get(platformName);
+                mapvalue.push(cur);
+            }
+            preMap.set(platformName, mapvalue);
+            return preMap;
+        }, new Map()).forEach(item => {
+            let platformName = item[ 0 ].project.split("/")[ 1 ];
+            let oneProjectLevel = { env: `${ platformName }#${ env }#${ moment().format(configs.fileDataFormat) }`, data: item };
+            golbalViewsaveToJson(oneProjectLevel);
+        });
+        await downLoadAlltheTime(db_details_fileurls, env, instance);
+    }
+}
+
+async function downLoadAlltheTime(db_details_fileurls, env, instance) {
+    let notDownTable = await downFiles(db_details_fileurls, env, instance);
+    if (notDownTable.length != 0) {
+        await downLoadAlltheTime(notDownTable, env, instance);
+    }
+}
+async function downLoadAlltheTime_structure(URList, instance, type) {
+    let DB_list_result = false;
+    async function getData(PromisListf) {
+        let FileListNode = await Promise.allSettled(PromisListf.flat());
+        DB_list_result = getDataFromAxiosResponse(FileListNode, type);
+    }
+    while (DB_list_result == false) {
+        let PromisList = null;
+        if (type == "getRules") {
+            PromisList = URList.map((projectBasePath) => {
+                return instance.get(projectBasePath);
+            });
+        }
+        if (type == "getDecisions") {
+            PromisList = URList.map((rules) => {
+                let oneRulegetDecision = rules.data.filter(item => {
+                    switch (String(compareEnv.project)) {
+                        case "undefined":
+                        case "ALL":
+                            return true;
+                        default:
+                            if (compareEnv.project == item) {
+                                return true;
+                            } else {
+                                return false;
+                            }
+                    }
+                }).map(item => {
+                    let tagetUrl = rules.project.replace("projects", "project") + "/" + item;
+                    return instance.get(tagetUrl);
+                });;
+                return oneRulegetDecision;
+            });
+        }
+        await getData(PromisList);
+    }
+    return DB_list_result;
+}
+
+async function downLoadFromContentFragment(envs = [ "SIT", "UAT", "PROD" ]) {
+    for (let env of envs) {
+        for (let platformConfig of configs.SourceHostConfig.contentFragmentbaseHosts) {
+            if (!["TH"].includes(platformConfig.platform)) break;
+            let ProjectBaseHost = platformConfig.hosts.filter(item => item.env == env)[ 0 ]?.url;
+            let instance = axios.create({
+                baseURL: ProjectBaseHost,
+                timeout: 15000
+            });
+            let db_details_fileurls = platformConfig.projects.map(item => {
+                return `${ ProjectBaseHost }${ item }`;
+            });
+            // 加参数过滤
+            db_details_fileurls = db_details_fileurls.flat().filter(item => {
+                return true;
+            });
+            await downLoadAlltheTime(db_details_fileurls, env, instance);
+        }
+    }
+}
+// 只涉及下载和转换
+export async function downLoadAndTransform() {
+    console.log("start download .....");
+    await downLoadFromDataBase();
+    BRE_filetoArray(`${ configs.collectionDataStore }originSource`);
+    // await downLoadFromContentFragment();
+    // contentFragmen_fileToArray(`${ configs.collectionDataStore }originSource`);
+}
